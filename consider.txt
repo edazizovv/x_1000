@@ -1,0 +1,2 @@
+1) регуляризация?? (см. statsmodels fit)
+2) рассмотреть какие в statsmodels есть robust estimates
