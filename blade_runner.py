@@ -39,7 +39,13 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=test_size, r
 
 ammo = X1010()
 
-diagnosed = ammo.diagnose(x=x, y=y, model_code='OLSV', x_factors=x_factors)
-fitted = ammo.fit(x=x, y=y, model_code='OLSV', x_factors=x_factors)
+# https://www.statsmodels.org/devel/generated/statsmodels.regression.linear_model.OLSResults.get_robustcov_results.html
+model_name = 'OLS'
+model_kwargs = {'cov_type': 'nonrobust'}
+# model_kwargs = {'cov_type': 'HC3'}
+# model_kwargs = {'cov_type': 'HAC', 'cov_kwds': {'maxlags': 1}}
+
+diagnosed = ammo.diagnose(x=x, y=y, model_code=model_name, x_factors=x_factors, model_kwargs=model_kwargs)
+fitted = ammo.fit(x=x, y=y, model_code=model_name, x_factors=x_factors, model_kwargs=model_kwargs)
 assessed = ammo.assess(x=x, y=y, model=fitted.model, x_factors=x_factors)
 measured = ammo.measure(x=x, y=y, model=fitted.model)

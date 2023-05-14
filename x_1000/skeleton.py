@@ -14,10 +14,9 @@ from statsmodels.graphics.regressionplots import plot_leverage_resid2
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 
-
 #
 from x_1000.outer_rim import X0000, D0000, F0000, A0000, M0000
-from x_1000.outer_models import OLS
+from x_1000.outer_models import OLS, WLS
 
 
 #
@@ -50,10 +49,8 @@ class X1010(X0000):
         assess_kwargs = {}
         measure_kwargs = {}
 
-        # TODO: TBD 'OLSW', 'OLSN', 'WLS', 'FGLS'
-        self.codes_names = {'OLSV': 'Ordinary Least Squares (Vanilla)'}
-        self.codes_models = {'OLSV': OLS}
-        self.codes_kwargs = {'OLSV': {}}
+        self.codes_names = {'OLS': 'Ordinary Least Squares', 'WLS': 'Weighted Least Squares'}
+        self.codes_models = {'OLS': OLS, 'WLS': WLS}
 
         super().__init__(diagnose=diagnose, fit=fit, assess=assess, measure=measure,
                          diagnose_kwargs=diagnose_kwargs, fit_kwargs=fit_kwargs,
@@ -63,15 +60,15 @@ class X1010(X0000):
         return self.codes_names
 
     def get_model(self, model_code):
-        return self.codes_models[model_code], self.codes_kwargs[model_code]
+        return self.codes_models[model_code]
 
-    def diagnose(self, x, y, model_code, x_factors, **kwargs):
-        model, model_kwargs = self.get_model(model_code=model_code)
+    def diagnose(self, x, y, model_code, x_factors, model_kwargs, **kwargs):
+        model = self.get_model(model_code=model_code)
         return self._diagnose(x=x, y=y, model=model, x_factors=x_factors,
                               **model_kwargs, **self._diagnose_kwargs, **kwargs)
 
-    def fit(self, x, y, model_code, x_factors, **kwargs):
-        model, model_kwargs = self.get_model(model_code=model_code)
+    def fit(self, x, y, model_code, x_factors, model_kwargs, **kwargs):
+        model = self.get_model(model_code=model_code)
         return self._fit(x=x, y=y, model=model, x_factors=x_factors, **model_kwargs, **self._fit_kwargs, **kwargs)
 
     def assess(self, x, y, model, x_factors, **kwargs):
@@ -334,6 +331,9 @@ class A1010(A0000):
         # TODO: introduce wald tests & analyze their pros & cons
         # individual significance
 
+        # TODO: consider confidence intervals to check for sign change
+        # TODO: introduce sign checks based on standardized signs on data preprocessing
+
         r = numpy.identity(self.model.params.shape[0])
         self.ts_pvalues = self.model.model.t_test(r).pvalue
 
@@ -507,7 +507,7 @@ class M1010(M0000):
             y_avg = y_true.mean()
             ss_res = ((y_true - y_hat) ** 2).sum()
             ss_tot = ((y_true - y_avg) ** 2).sum()
-            measured = 1 - (ss_res / ss_tot)
+            measured = (ss_res / ss_tot)
             return measured
 
         self.nse_value = nse(y_true=self.y, y_hat=self.y_hat)
@@ -518,7 +518,7 @@ class M1010(M0000):
             y_avg = numpy.median(y_true)
             sa_res = ((y_true - y_hat) ** 2).sum()
             sa_tot = ((y_true - y_avg) ** 2).sum()
-            measured = 1 - (sa_res / sa_tot)
+            measured = (sa_res / sa_tot)
             return measured
 
         self.nae_value = nae(y_true=self.y, y_hat=self.y_hat)
@@ -549,7 +549,8 @@ class M1010(M0000):
         # TODO: TBD
         summary = pandas.DataFrame(data={'{0:.2f}-q_low'.format(q_low): [-1, -1, -1],
                                          'main_value': [self.nse_value, self.nae_value, self.smape_value],
-                                         '{0:.2f}-q_upp'.format(q_upp): [-1, -1, -1]})
+                                         '{0:.2f}-q_upp'.format(q_upp): [-1, -1, -1]},
+                                   index=['NSE', 'NAE', 'SMAPE'])
         print(summary)
 
     def values(self, q_low=0.10, q_upp=0.90):
