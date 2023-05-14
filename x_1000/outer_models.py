@@ -47,18 +47,18 @@ class OLS:
 
 
 class WLS:
-    def __init__(self, weights_finder, x_factors=None, **kwargs):
+    def __init__(self, weights_finder, x_factors=None, ols_kwargs=None, **kwargs):
         self.weights_finder = weights_finder
         self._model = sm.WLS
         self._model_kwargs = {**kwargs}
         self.x_factors = x_factors
         self.model = None
         self.weights = None
-
-    def find_weights(self, x, y, y_hat, ols_kwargs=None):
-        errors = y - y_hat
         if ols_kwargs is None:
-            ols_kwargs = {}
+            self.ols_kwargs = {}
+
+    def find_weights(self, x, y, y_hat):
+        errors = y - y_hat
         # TODO: implement n bins approach
         if self.weights_finder == 'y':
             self.weights = 1 / y
@@ -73,16 +73,20 @@ class WLS:
         elif self.weights_finder == 'err**2':
             self.weights = 1 / errors ** 2
         elif self.weights_finder == 'fitted_resids':
-            inter_ols = sm.OLS(exog=y_hat, endog=numpy.abs(errors)).fit(**ols_kwargs)
+            inter_ols = sm.OLS(exog=y_hat, endog=numpy.abs(errors)).fit(**self.ols_kwargs)
             self.weights = 1 / inter_ols.fittedvalues ** 2
         elif self.x_factors is not None:
             if self.weights_finder in self.x_factors:
                 self.weights = 1 / x[:, self.x_factors.index(self.weights_finder)]
             else:
                 raise ValueError("Invalid weights_finder provided; x_factors is None")
-        raise ValueError("Invalid weights_finder provided")
+        else:
+            raise ValueError("Invalid weights_finder provided")
 
     def fit(self, x, y):
+        inter_model = sm.OLS(y, x).fit(**self.ols_kwargs)
+        y_hat = inter_model.fittedvalues
+        self.find_weights(x=x, y=y, y_hat=y_hat)
         self.model = self._model(y, x, weights=self.weights).fit(**self._model_kwargs)
 
     def predict(self, x):

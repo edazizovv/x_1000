@@ -44,6 +44,8 @@ model_name = 'OLS'
 model_kwargs = {'cov_type': 'nonrobust'}
 # model_kwargs = {'cov_type': 'HC3'}
 # model_kwargs = {'cov_type': 'HAC', 'cov_kwds': {'maxlags': 1}}
+# model_kwargs = {'weights_finder': 'fitted_resids'}
+# model_kwargs = {'weights_finder': 'abs(err)'}
 
 diagnosed = ammo.diagnose(x=x, y=y, model_code=model_name, x_factors=x_factors, model_kwargs=model_kwargs)
 fitted = ammo.fit(x=x, y=y, model_code=model_name, x_factors=x_factors, model_kwargs=model_kwargs)
