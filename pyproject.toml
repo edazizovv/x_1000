@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "x_1000"
+version = "0.0.1"
+description = "A modelling pack"
+authors = [
+  "edazizovv",
+]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "x_1000"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
